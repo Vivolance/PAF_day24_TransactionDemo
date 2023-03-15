@@ -13,13 +13,15 @@ public class BankAccountService {
     @Autowired
     BankAccountRepo bankAcctRepo;
 
+    //Transactional tab allows ALL the functions below to be executed, if one fails the whole function fails.
+    //Some fail case includes withdrawing out 1000 but not depositing it somewhere, without the transation tab the 1000
+    //only be withdrawn and not deposited, causing the 1000 to be "lost".
     //set isolation levels
     @Transactional(isolation = Isolation.READ_UNCOMMITTED)
     public Boolean transferMoney(Integer accountFrom, Integer accountTo, Float amount) {
         Boolean bTransferred = false;
         Boolean bWithdrawn = false;
         Boolean bDeposited = false;
-        Boolean bCanWithdraw = false;
 
         BankAccount depositAccount = null;
         BankAccount withdrawalAccount = null;
@@ -30,7 +32,7 @@ public class BankAccountService {
 
         //Logic flow of this function in the service layer:
 
-        //1. check if accounts (withdrawere and depositer) are valid (active)
+        //1. check if accounts (withdrawer and depositer) are valid (active)
         withdrawalAccount = bankAcctRepo.retrieveAccountDetails(accountFrom);
         depositAccount = bankAcctRepo.retrieveAccountDetails(accountTo);
         bWithdrawalAccountValid = withdrawalAccount.getIsActive();
@@ -41,8 +43,8 @@ public class BankAccountService {
 
         //2. check withdrawn account has more money then withdrawal amount
         if (bProceed) {
-            if(withdrawalAccount.getBalance() >= amount) {
-                bCanWithdraw = true;
+            if (withdrawalAccount.getBalance() >= amount) {
+                bProceed = true;
             } else {
                 bProceed = false;
             }
@@ -51,6 +53,11 @@ public class BankAccountService {
         if (bProceed) {
             //3. perform withdrawal (requires transactions)
             bWithdrawn = bankAcctRepo.withdrawAmount(accountFrom, amount);
+
+            //bWithdrawn = false;
+            if (!bWithdrawn) {
+                throw new IllegalArgumentException("Simulate error before Withdrawal");
+            }
 
             //4. perform deposit (requires transactions)
             bDeposited = bankAcctRepo.depositAmount(accountTo, amount);

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TransferRequest {
 
+    //This 3 are parameters to pass into postman for testing
     private Integer accountFrom;
 
     private Integer accountTo;
